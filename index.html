@@ -83,6 +83,10 @@ label{display:block;font-size:12px;color:var(--mut);margin:12px 0 6px;letter-spa
 @keyframes sweep{0%,60%{transform:translateX(-120%) rotate(-25deg)}100%{transform:translateX(120%) rotate(-25deg)}}
 .c-top,.c-bot{display:flex;justify-content:space-between;align-items:center;font-weight:700;letter-spacing:1.5px;font-size:13px;position:relative;z-index:1}
 .chip{background:rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px}
+.gift{width:58px;height:58px;flex:none;margin:-8px -6px 0 0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.3));animation:giftf 3.2s ease-in-out infinite}
+.gift .sp{transform-box:fill-box;transform-origin:center;animation:twk 2s ease-in-out infinite}.gift .sp2{animation-delay:.7s}.gift .sp3{animation-delay:1.3s}
+@keyframes giftf{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-5px) rotate(4deg)}}
+@keyframes twk{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.25;transform:scale(.6)}}
 .c-bal{position:relative;z-index:1}
 .c-bal b{font-size:clamp(44px,12vw,64px);line-height:1;font-weight:800;text-shadow:0 4px 20px rgba(0,0,0,.3)}
 .c-bal small{margin-left:8px;opacity:.85;font-size:15px}
@@ -257,6 +261,19 @@ function loop() {
 }
 
 
+
+/* ═════════ REGALO DE LA TARJETA ═════════ */
+function giftSvg() {
+  return '<svg class="gift" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="fgb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dfe7ff"/></linearGradient><linearGradient id="fgr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFB300"/></linearGradient></defs>'
+    + '<path d="M32 22c-3-8-14-11-15-5-1 5 8 6 15 5z" fill="url(#fgr)" stroke="#E09B00" stroke-width="1.2" stroke-linejoin="round"/>'
+    + '<path d="M32 22c3-8 14-11 15-5 1 5-8 6-15 5z" fill="url(#fgr)" stroke="#E09B00" stroke-width="1.2" stroke-linejoin="round"/>'
+    + '<rect x="13" y="33" width="38" height="24" rx="4" fill="url(#fgb)"/><rect x="10" y="22" width="44" height="12" rx="4" fill="#fff"/>'
+    + '<rect x="10" y="30" width="44" height="4" fill="#000" opacity=".07"/><rect x="28" y="22" width="8" height="35" fill="url(#fgr)"/>'
+    + '<circle cx="32" cy="22" r="3.6" fill="#FFC21A" stroke="#E09B00" stroke-width="1.2"/>'
+    + '<path class="sp" d="M54 9l1.3 3.2 3.2 1.3-3.2 1.3L54 18l-1.3-3.2-3.2-1.3 3.2-1.3z" fill="#fff"/>'
+    + '<path class="sp sp2" d="M8 12l.9 2.1 2.1.9-2.1.9L8 18l-.9-2.1L5 15l2.1-.9z" fill="#FFE27A"/>'
+    + '<circle class="sp sp3" cx="58" cy="28" r="1.4" fill="#fff"/></svg>';
+}
 
 /* ═════════ SIN AUTORRELLENO AL ABRIR ═════════ */
 // Los campos del login nacen en solo lectura para que Chrome no meta la cuenta guardada al abrir.
@@ -437,7 +454,7 @@ async function boot() {
 
 /* ═════════ AUTENTICACIÓN ═════════ */
 function authView(mode, email = '') {
-  const heroCard = `<div class="card3d"><div class="shine"></div><div class="c-top"><span>${APP.toUpperCase()}</span><span class="chip">CLUB</span></div><div class="c-bal"><b>1.250</b><small>puntos</small></div><div class="c-bot"><span>Tu nombre</span><span>FM123456</span></div></div>`;
+  const heroCard = `<div class="card3d"><div class="shine"></div><div class="c-top"><span>${APP.toUpperCase()}</span>${giftSvg()}</div><div class="c-bal"><b>1.250</b><small>puntos</small></div><div class="c-bot"><span>Tu nombre</span><span>FM123456</span></div></div>`;
   const forms = {
     login: `<h1>Bienvenido</h1><p class="sub mut">Accede con tu correo y contraseña</p>
       <label>CORREO</label><input id="em" type="email" autocomplete="username" readonly value="${esc(email)}" placeholder="tu@correo.com">
@@ -523,7 +540,7 @@ function clientView(d) {
   <main class="wrap cgrid">
     <section class="col-l">
       <div class="card3d" id="card"><div class="shine"></div>
-        <div class="c-top"><span>${APP.toUpperCase()}</span><span class="chip">CLUB</span></div>
+        <div class="c-top"><span>${APP.toUpperCase()}</span>${giftSvg()}</div>
         <div><div class="c-bal"><b id="bal">0</b><small>puntos</small></div><div class="c-eur" id="eur"></div></div>
         <div class="c-bot"><span>${esc(d.user.nombre)}</span><span>${esc(d.user.id)}</span></div></div>
       <div class="glass qrbox"><h3>Tu código QR</h3><p class="mut" style="margin:6px 0 0">Enséñalo en caja para sumar o pagar con puntos</p>
