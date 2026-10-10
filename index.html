@@ -258,6 +258,20 @@ function loop() {
 
 
 
+/* ═════════ SIN AUTORRELLENO AL ABRIR ═════════ */
+// Los campos del login nacen en solo lectura para que Chrome no meta la cuenta guardada al abrir.
+// Al tocar un campo se desbloquea y Chrome ofrece las cuentas guardadas como sugerencia.
+function noAutofill() {
+  const ins = [...document.querySelectorAll('.authbox input[readonly]')];
+  let tocado = false;
+  ins.forEach(i => {
+    const on = () => { tocado = true; ins.forEach(x => x.removeAttribute('readonly')); };
+    i.addEventListener('pointerdown', on); i.addEventListener('focus', on); i.addEventListener('keydown', on);
+  });
+  const limpia = () => { if (!tocado) ins.forEach(i => { if (i.id === 'pw' || !i.defaultValue) i.value = ''; }); };
+  [50, 300, 1000].forEach(ms => setTimeout(limpia, ms));
+}
+
 /* ═════════ LLAVE NFC (mantener ENTRAR 3 s) ═════════ */
 function bindLongPress(btn) {
   let t = null;
@@ -426,8 +440,8 @@ function authView(mode, email = '') {
   const heroCard = `<div class="card3d"><div class="shine"></div><div class="c-top"><span>${APP.toUpperCase()}</span><span class="chip">CLUB</span></div><div class="c-bal"><b>1.250</b><small>puntos</small></div><div class="c-bot"><span>Tu nombre</span><span>FM123456</span></div></div>`;
   const forms = {
     login: `<h1>Bienvenido</h1><p class="sub mut">Accede con tu correo y contraseña</p>
-      <label>CORREO</label><input id="em" type="email" autocomplete="username" value="${esc(email)}" placeholder="tu@correo.com">
-      <label>CONTRASEÑA</label><div class="pw"><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" onclick="eye()">👁</button></div>
+      <label>CORREO</label><input id="em" type="email" autocomplete="username" readonly value="${esc(email)}" placeholder="tu@correo.com">
+      <label>CONTRASEÑA</label><div class="pw"><input id="pw" type="password" autocomplete="current-password" readonly placeholder="••••••••"><button type="button" onclick="eye()">👁</button></div>
       <button class="btn big" style="margin-top:18px" id="go">Entrar</button>
       <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('forgot',$('#em').value)">¿Olvidaste tu contraseña?</button></div>`,
     forgot: `<h1>Recuperar contraseña</h1><p class="sub mut">Te enviaremos un código por correo</p>
@@ -450,6 +464,7 @@ function authView(mode, email = '') {
   showInst(); bindTilt();
   const go = $('#go'), submit = () => go.click();
   bindLongPress(go);
+  noAutofill();
   document.querySelectorAll('.authbox input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
   go.onclick = () => { if (go._lp) { go._lp = false; return; } act(go, async () => {
     const em = $('#em').value.trim();
