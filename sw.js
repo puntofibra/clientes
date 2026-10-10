@@ -1,10 +1,10 @@
 // Service worker: permite instalar la app y abrirla sin conexión (la interfaz).
 // Los datos (puntos, movimientos) siempre van a la red: nunca se cachean.
-const VERSION = 'fm-club-v3';
+const VERSION = 'fm-club-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', e => {
