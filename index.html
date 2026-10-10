@@ -523,7 +523,17 @@ function authView(mode, email = '') {
       <label>CORREO</label><input id="em" type="email" autocomplete="username" readonly value="${esc(email)}" placeholder="tu@correo.com">
       <label>CONTRASEÑA</label><div class="pw"><input id="pw" type="password" autocomplete="current-password" readonly placeholder="••••••••"><button type="button" onclick="eye()">👁</button></div>
       <button class="btn big" style="margin-top:18px" id="go">Entrar</button>
-      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('forgot',$('#em').value)">¿Olvidaste tu contraseña?</button></div>`,
+      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('forgot',$('#em').value)">¿Olvidaste tu contraseña?</button></div>
+      <div style="text-align:center;margin-top:10px;font-size:14px" class="mut">¿Aún no eres del club? <button class="link" style="font-weight:700" onclick="authView('register')">Regístrate gratis</button></div>`,
+    register: `<h1>Únete al club</h1><p class="sub mut">Regístrate y te regalamos <b style="color:var(--b)">20 puntos</b> de bienvenida 🎁</p>
+      <label>NOMBRE Y APELLIDOS</label><input id="rn" autocomplete="name" maxlength="80" placeholder="Ana Martínez López">
+      <label>CORREO</label><input id="em" type="email" autocomplete="email" value="${esc(email)}" placeholder="tu@correo.com">
+      <label>TELÉFONO</label><input id="tl" type="tel" autocomplete="tel" inputmode="tel" placeholder="600 000 000">
+      <input id="rw" name="web" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0;height:0;width:0" aria-hidden="true">
+      <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-size:13px;letter-spacing:0;margin-top:14px"><input type="checkbox" id="ra" style="width:auto;margin:2px 0 0;accent-color:#8b5cf6;transform:scale(1.2)"> Acepto que ${APP} guarde mis datos para gestionar mis puntos y avisarme de mis regalos.</label>
+      <button class="btn big" style="margin-top:18px" id="go">Crear mi cuenta</button>
+      <p class="mut" style="font-size:12px;text-align:center;margin:10px 0 0">Te enviaremos tu contraseña por correo.</p>
+      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('login',$('#em').value)">← Ya tengo cuenta</button></div>`,
     forgot: `<h1>Recuperar contraseña</h1><p class="sub mut">Te enviaremos un código por correo</p>
       <label>CORREO</label><input id="em" type="email" value="${esc(email)}" placeholder="tu@correo.com">
       <button class="btn big" style="margin-top:18px" id="go">Enviar código</button>
@@ -551,6 +561,13 @@ function authView(mode, email = '') {
     if (mode === 'login') {
       const d = await call('login', {email:em, password:$('#pw').value});
       S.token = d.token; localStorage.setItem('fm_t', d.token); await boot();
+    } else if (mode === 'register') {
+      const d = await call('register', {nombre:$('#rn').value, email:em, telefono:$('#tl').value, acepto:$('#ra').checked, web:$('#rw').value});
+      authView('login', d.email);
+      modal(`<div style="text-align:center"><div style="font-size:54px">🎉</div><h3>¡Bienvenido al club!</h3>
+        <p class="mut">Te hemos enviado tu contraseña a <b>${esc(d.email)}</b>.<br>Entra con ella y tendrás <b>${d.bono} puntos</b> de regalo esperándote.</p>
+        <p class="mut" style="font-size:12px">Si no lo ves, mira en la carpeta de spam.</p>
+        <button class="btn big" style="width:100%;margin-top:8px" onclick="closeModal()">Entendido</button></div>`);
     } else if (mode === 'forgot') {
       await call('forgot', {email:em}); toast('Si el correo existe, te hemos enviado un código', 'ok'); authView('reset', em);
     } else {
