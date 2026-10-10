@@ -262,6 +262,69 @@ function loop() {
 
 
 
+/* ═════════ EVENTO ESPECIAL (ADMIN) ═════════ */
+function evBox() {
+  if (!$('#evbox')) return;
+  S.evSel = null;
+  const info = () => {
+    const p = parseInt($('#evp').value) || 0, d = parseInt($('#evd').value) || 0;
+    const f = new Date(Date.now() + d * 86400000).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+    $('#evinfo').innerHTML = p > 0 && d > 0 ? 'Cada cliente recibe <b>' + num(p) + ' puntos</b> (' + eur(p) + '), que caducan el <b>' + f + '</b>.' : '';
+  };
+  $('#evp').oninput = info; $('#evd').oninput = info; info();
+  $('#evmail').onchange = async () => {
+    const q = $('#evquota'); if (!$('#evmail').checked) { q.textContent = ''; return; }
+    q.textContent = 'Comprobando el límite de correos…';
+    try { const r = await call('mailQuota'); q.innerHTML = 'Hoy puedes enviar <b>' + num(r.cuota) + '</b> correos más (Gmail tiene un límite diario). Si hay más clientes que correos disponibles, los que sobren recibirán los puntos pero no el correo.'; }
+    catch (e) { q.textContent = e.message; }
+  };
+  $('#evsel').onclick = e => act(e.currentTarget, evElegir);
+  $('#evgo').onclick = e => act(e.currentTarget, evLanzar);
+}
+function evSelTxt() {
+  const n = S.evSel ? S.evSel.size : 0;
+  $('#evselt').innerHTML = n ? 'Solo <b>' + n + '</b> cliente' + (n > 1 ? 's' : '') + ' elegido' + (n > 1 ? 's' : '') + ' · <button class="link" onclick="S.evSel=null;evSelTxt()">quitar</button>' : 'Para todos los clientes';
+}
+async function evElegir() {
+  const cl = (await call('clients')).filter(c => c.activo !== false);
+  const sel = new Set(S.evSel || []);
+  modal(`<h3>👥 Elegir clientes</h3><p class="mut" style="font-size:13px">Marca a quién va el evento. Si no marcas ninguno, va para todos.</p>
+    <input id="evq" placeholder="Buscar por nombre, correo o código" style="margin-top:8px">
+    <div style="display:flex;justify-content:space-between;margin:10px 0 6px"><button class="link" id="evall">Marcar todos</button><button class="link" id="evnone">Ninguno</button><span class="mut" id="evcnt" style="font-size:13px"></span></div>
+    <div id="evlist" style="max-height:46vh;overflow:auto;display:grid;gap:4px"></div>
+    <div style="display:flex;gap:10px;margin-top:14px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="evok" style="flex:1">Aceptar</button></div>`);
+  const pinta = () => {
+    const q = ($('#evq').value || '').toLowerCase();
+    $('#evlist').innerHTML = cl.filter(c => !q || (c.nombre + ' ' + c.email + ' ' + c.id).toLowerCase().includes(q)).map(c =>
+      '<label style="display:flex;gap:10px;align-items:center;padding:9px 10px;border-radius:10px;background:rgba(255,255,255,.04);cursor:pointer;margin:0;font-size:14px;color:inherit;letter-spacing:0"><input type="checkbox" data-id="' + esc(c.id) + '"' + (sel.has(c.id) ? ' checked' : '') + ' style="width:auto;margin:0;accent-color:#8b5cf6;transform:scale(1.2)"><span style="flex:1;min-width:0"><b>' + esc(c.nombre) + '</b><br><small class="mut">' + esc(c.email) + ' · ' + esc(c.id) + '</small></span></label>').join('') || '<div class="empty">Sin resultados</div>';
+    $('#evlist').querySelectorAll('input[type=checkbox]').forEach(i => i.onchange = () => { i.checked ? sel.add(i.dataset.id) : sel.delete(i.dataset.id); cnt(); });
+    cnt();
+  };
+  const cnt = () => { $('#evcnt').textContent = sel.size ? sel.size + ' marcados' : 'Ninguno = todos'; };
+  $('#evq').oninput = pinta;
+  $('#evall').onclick = () => { cl.forEach(c => sel.add(c.id)); pinta(); };
+  $('#evnone').onclick = () => { sel.clear(); pinta(); };
+  $('#evok').onclick = () => { S.evSel = sel.size ? sel : null; closeModal(); evSelTxt(); };
+  pinta();
+}
+async function evLanzar() {
+  const titulo = $('#evt').value.trim(), p = parseInt($('#evp').value), d = parseInt($('#evd').value), correo = $('#evmail').checked;
+  if (!titulo) throw new Error('Pon un título al evento');
+  if (!(p > 0)) throw new Error('Pon cuántos puntos quieres regalar');
+  if (!(d >= 1)) throw new Error('Pon en cuántos días caducan');
+  const ids = S.evSel ? [...S.evSel] : [];
+  const quien = ids.length ? ids.length + ' cliente' + (ids.length > 1 ? 's elegidos' : ' elegido') : 'TODOS los clientes activos';
+  const f = new Date(Date.now() + d * 86400000).toLocaleDateString('es-ES');
+  if (!confirm('«' + titulo + '»\n\n' + p + ' puntos (' + eur(p) + ') para ' + quien + '.\nCaducan el ' + f + ' (' + d + ' días).\n' + (correo ? 'Se enviará un correo a cada uno.' : 'Sin correo.') + '\n\n¿Lanzar el evento?')) return;
+  const r = await call('evento', { titulo, puntos: p, dias: d, ids, correo });
+  modal(`<div style="text-align:center"><div style="font-size:54px">🎉</div><h3>Evento lanzado</h3>
+    <p class="mut">«${esc(titulo)}»: <b>${num(r.puntos)} puntos</b> para <b>${num(r.clientes)}</b> cliente${r.clientes > 1 ? 's' : ''}.<br>Caducan el ${new Date(r.caduca).toLocaleDateString('es-ES')}.</p>
+    ${r.correo ? '<p class="mut">📧 Correos enviados: <b>' + r.enviados + '</b>' + (r.sinEnviar ? '<br>⚠️ ' + r.sinEnviar + ' sin enviar por el límite diario de Gmail' : '') + '</p>' : ''}
+    <button class="btn big" style="width:100%;margin-top:8px" onclick="closeModal()">Genial</button></div>`);
+  if (typeof confetti === 'function') try { confetti(); } catch (e) {}
+  ['#evt', '#evp'].forEach(k => { if ($(k)) $(k).value = ''; }); S.evSel = null; if ($('#evselt')) evSelTxt(); if ($('#evinfo')) $('#evinfo').innerHTML = '';
+}
+
 /* ═════════ REGALO DE LA TARJETA ═════════ */
 function giftSvg() {
   return '<svg class="gift" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="fgb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#dfe7ff"/></linearGradient><linearGradient id="fgr" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFB300"/></linearGradient></defs>'
@@ -528,8 +591,8 @@ function pwModal() {
 }
 
 /* ═════════ CLIENTE ═════════ */
-const ICO = {compra:'🛍️', canje:'💸', ajuste:'🛠️', bienvenida:'🎁', caducidad:'⌛'};
-const LBL = {compra:'Compra', canje:'Pago con puntos', ajuste:'Ajuste', bienvenida:'Bienvenida', caducidad:'Puntos caducados'};
+const ICO = {compra:'🛍️', canje:'💸', ajuste:'🛠️', bienvenida:'🎁', caducidad:'⌛', evento:'🎉'};
+const LBL = {compra:'Compra', canje:'Pago con puntos', ajuste:'Ajuste', bienvenida:'Bienvenida', caducidad:'Puntos caducados', evento:'Evento especial'};
 function movRow(m) {
   return `<div class="mv"><div class="ic">${ICO[m.tipo] || '•'}</div><div class="t"><b>${esc(m.nota || LBL[m.tipo])}</b><small>${LBL[m.tipo] || m.tipo} · ${fdate(m.fecha)}</small></div>
     <div class="pts ${m.puntos > 0 ? 'pos' : 'neg'}">${m.puntos > 0 ? '+' : ''}${num(m.puntos)}<small>saldo ${num(m.saldoTras)}</small></div></div>`;
@@ -702,8 +765,18 @@ async function tabSt() {
         <p class="mut" style="font-size:13px">Ahora mismo: ${s.config.puntosPorEuro} pts/€ = ${s.config.puntosPorEuro}% de vuelta (1 pt = 0,01 €).</p><button class="btn" id="rok">Guardar regla</button></div>
       <div class="glass" style="max-width:520px"><h3>Caducidad de los puntos</h3><label>MESES DE VALIDEZ (0 = no caducan nunca)</label><input id="ct" inputmode="numeric" value="${s.config.mesesCaducidad}">
         <p class="mut" style="font-size:13px">Ahora mismo: ${s.config.mesesCaducidad === 0 ? 'los puntos no caducan' : 'caducan a los ' + s.config.mesesCaducidad + ' meses de obtenerlos'}. El cambio afecta también a los puntos ya acumulados: si lo aumentas, se amplía su vida; si lo reduces, caducarán los que superen el nuevo plazo.</p><button class="btn" id="cok">Guardar caducidad</button></div>
+      <div class="glass" style="max-width:520px" id="evbox"><h3>🎉 Evento especial</h3>
+        <p class="mut" style="font-size:13px">Regala puntos a tus clientes con su propia caducidad. Por ejemplo, en Navidad: 100 puntos que caducan en 30 días.</p>
+        <label>TÍTULO DEL EVENTO</label><input id="evt" maxlength="80" placeholder="Regalo de Navidad">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div><label>PUNTOS A REGALAR</label><input id="evp" inputmode="numeric" placeholder="100"></div>
+        <div><label>CADUCAN EN (DÍAS)</label><input id="evd" inputmode="numeric" value="30"></div></div>
+        <p class="mut" id="evinfo" style="font-size:13px;margin-top:8px"></p>
+        <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:14px;color:inherit;letter-spacing:0;margin-top:14px"><input type="checkbox" id="evmail" style="width:auto;margin:0;accent-color:#8b5cf6;transform:scale(1.25)"> Enviar un correo a cada cliente avisando del regalo</label>
+        <p class="mut" id="evquota" style="font-size:12px;margin:6px 0 0"></p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px"><button class="btn ghost" id="evsel">👥 Elegir clientes</button><span class="mut" id="evselt" style="font-size:13px">Para todos los clientes</span></div>
+        <button class="btn" id="evgo" style="margin-top:16px;width:100%">🎁 Lanzar evento</button></div>
       <div class="glass" style="max-width:520px" id="totpbox"><h3>Acceso con Google Authenticator</h3><p class="mut">Cargando…</p></div></div>`;
-    totpBox();
+    totpBox(); evBox();
     $('#rok').onclick = e => act(e.currentTarget, async () => { const c = await call('setConfig', {puntosPorEuro:$('#rt').value.replace(',', '.')}); A.rate = c.puntosPorEuro; toast('Regla actualizada', 'ok'); tabSt(); });
     $('#cok').onclick = e => act(e.currentTarget, async () => {
       const m = parseInt($('#ct').value), old = s.config.mesesCaducidad;
