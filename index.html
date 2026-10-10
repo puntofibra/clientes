@@ -573,7 +573,7 @@ function clientView(d) {
 }
 
 /* ═════════ ADMIN ═════════ */
-const TABS = [['op','🎯','Operar'], ['cl','👥','Clientes'], ['mv','🧾','Movimientos'], ['st','⚙️','Resumen']];
+const TABS = [['op','🎯','Operar'], ['cl','👥','Clientes'], ['mv','🧾','Movimientos'], ['st','⚙️','Ajustes']];
 async function adminView(d) {
   S.user = d.user; clearInterval(S.poll); clearInterval(S.qrTimer);
   $('#app').innerHTML = `${topbar('Administrador')}<div class="adm"><nav class="nav" id="nav"></nav><main class="wrap" id="tab"></main></div>`;
