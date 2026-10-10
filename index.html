@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FuturMovil Club</title>
+<meta name="theme-color" content="#07070f">
+<meta name="description" content="Programa de fidelización FuturMovil: acumula puntos y paga con ellos.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FM Club">
+<style>
+:root{--bg:#07070f;--glass:rgba(255,255,255,.06);--bd:rgba(255,255,255,.12);--a:#8b5cf6;--b:#22d3ee;--ok:#34d399;--bad:#fb7185;--mut:#9a9ab8;--r:20px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:#fff;min-height:100dvh;overflow-x:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+button,input{font:inherit;color:inherit}
+h1,h2,h3{margin:0}
+.mut{color:var(--mut)}
+[hidden]{display:none!important}
+
+/* fondo animado */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden}
+.bg i{position:absolute;width:55vmax;height:55vmax;border-radius:50%;filter:blur(90px);opacity:.35;animation:float 22s ease-in-out infinite}
+.bg i:nth-child(1){background:var(--a);left:-15vmax;top:-15vmax}
+.bg i:nth-child(2){background:var(--b);right:-20vmax;bottom:-20vmax;animation-delay:-8s}
+.bg i:nth-child(3){background:#ec4899;width:35vmax;height:35vmax;left:40%;top:30%;opacity:.18;animation-delay:-14s}
+@keyframes float{50%{transform:translate(8vmax,6vmax) scale(1.15)}}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:99}
+
+/* piezas */
+.glass{background:var(--glass);border:1px solid var(--bd);border-radius:var(--r);padding:20px;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.btn{border:0;cursor:pointer;border-radius:14px;padding:13px 18px;font-weight:700;background:linear-gradient(135deg,var(--a),var(--b));color:#fff;transition:transform .15s,box-shadow .2s,opacity .2s;box-shadow:0 8px 24px rgba(139,92,246,.35)}
+.btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(139,92,246,.5)}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.55;pointer-events:none}
+.btn.ghost{background:var(--glass);border:1px solid var(--bd);box-shadow:none}
+.btn.red{background:linear-gradient(135deg,#f43f5e,#fb923c)}
+.btn.sm{padding:8px 12px;font-size:13px;border-radius:11px}
+.btn.big{width:100%;padding:16px;font-size:16px}
+input{width:100%;background:rgba(0,0,0,.35);border:1px solid var(--bd);border-radius:13px;padding:13px 14px;outline:0;transition:border .2s,box-shadow .2s}
+input:focus{border-color:var(--a);box-shadow:0 0 0 4px rgba(139,92,246,.2)}
+label{display:block;font-size:12px;color:var(--mut);margin:12px 0 6px;letter-spacing:.4px}
+.row{display:flex;gap:10px;align-items:center}
+.row>*{flex:1}
+.link{background:none;border:0;color:var(--b);cursor:pointer;padding:6px 0;font-size:14px}
+
+/* barra superior */
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:12px 18px;background:rgba(7,7,15,.65);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--bd)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.5px;flex:1;min-width:0}
+.brand .lg{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--a),var(--b));display:grid;place-items:center;font-size:18px;flex:none}
+.brand span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.who{color:var(--mut);font-size:13px}
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+
+/* AUTH */
+.auth{min-height:100dvh;display:grid;place-items:center;padding:20px}
+.authbox{width:min(440px,100%);animation:rise .6s both}
+.hero{display:none}
+.logo{width:64px;height:64px;border-radius:20px;background:linear-gradient(135deg,var(--a),var(--b));display:grid;place-items:center;font-size:32px;margin:0 auto 14px;box-shadow:0 10px 36px rgba(139,92,246,.5);animation:pulse 3s infinite}
+@keyframes pulse{50%{box-shadow:0 10px 50px rgba(34,211,238,.6)}}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}}
+.authbox h1{text-align:center;font-size:26px}
+.authbox .sub{text-align:center;margin:6px 0 10px}
+.pw{position:relative}
+.pw button{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;cursor:pointer;font-size:18px;padding:6px}
+
+/* TARJETA 3D */
+.card3d{--rx:0deg;--ry:0deg;--mx:50%;--my:50%;position:relative;aspect-ratio:1.586;border-radius:24px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:linear-gradient(135deg,#6d28d9,#2563eb 55%,#06b6d4);background-size:200% 200%;animation:grad 9s ease infinite;transform:perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));transition:transform .15s;box-shadow:0 25px 60px rgba(76,29,149,.55)}
+@keyframes grad{50%{background-position:100% 100%}}
+.card3d .shine{position:absolute;inset:0;background:radial-gradient(circle at var(--mx) var(--my),rgba(255,255,255,.35),transparent 45%);pointer-events:none}
+.card3d:after{content:"";position:absolute;width:140%;height:60px;background:rgba(255,255,255,.08);transform:rotate(-25deg);left:-20%;top:30%;animation:sweep 6s infinite}
+@keyframes sweep{0%,60%{transform:translateX(-120%) rotate(-25deg)}100%{transform:translateX(120%) rotate(-25deg)}}
+.c-top,.c-bot{display:flex;justify-content:space-between;align-items:center;font-weight:700;letter-spacing:1.5px;font-size:13px;position:relative;z-index:1}
+.chip{background:rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px}
+.c-bal{position:relative;z-index:1}
+.c-bal b{font-size:clamp(44px,12vw,64px);line-height:1;font-weight:800;text-shadow:0 4px 20px rgba(0,0,0,.3)}
+.c-bal small{margin-left:8px;opacity:.85;font-size:15px}
+.c-eur{position:relative;z-index:1;opacity:.9;font-size:15px;margin-top:2px}
+
+/* QR */
+.qrbox{text-align:center}
+.qrwrap{background:#fff;border-radius:20px;padding:14px;display:inline-block;margin:14px 0 10px;position:relative;box-shadow:0 0 0 6px rgba(139,92,246,.25),0 0 40px rgba(34,211,238,.25);animation:glow 3s infinite}
+@keyframes glow{50%{box-shadow:0 0 0 6px rgba(34,211,238,.3),0 0 55px rgba(139,92,246,.4)}}
+#qr img,#qr canvas{display:block;width:min(62vw,220px)!important;height:auto!important}
+.bar{height:5px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden;max-width:240px;margin:6px auto}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--a),var(--b));transform-origin:left}
+.bar i.go{animation:shrink 50s linear forwards}
+@keyframes shrink{to{transform:scaleX(0)}}
+
+/* listas */
+.mv{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--bd);animation:rise .4s both}
+.mv:last-child{border:0}
+.ic{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;font-size:18px;flex:none;background:rgba(255,255,255,.08)}
+.mv .t{flex:1;min-width:0}
+.mv .t b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv .t small{color:var(--mut)}
+.pts{font-weight:800;font-variant-numeric:tabular-nums;text-align:right}
+.pts small{display:block;font-weight:500;color:var(--mut);font-size:11px}
+.pos{color:var(--ok)}.neg{color:var(--bad)}
+.empty{text-align:center;color:var(--mut);padding:30px 10px}
+.cgrid,.opgrid{display:grid;gap:18px}
+.stack{display:grid;gap:18px}
+
+/* ADMIN */
+.adm{display:block}
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;background:rgba(10,10,22,.85);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--bd);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+.nav button{flex:1;background:none;border:0;cursor:pointer;padding:8px 2px;border-radius:12px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:600}
+.nav button span{font-size:20px}
+.nav button.on{color:#fff;background:rgba(139,92,246,.25)}
+.adm main{padding-bottom:90px}
+.sel .big{font-size:42px;font-weight:800}
+.sel .who2{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.box{background:rgba(0,0,0,.25);border:1px solid var(--bd);border-radius:16px;padding:14px;margin-top:14px}
+.prev{margin-top:8px;color:var(--b);font-size:14px;min-height:20px}
+#reader{border-radius:16px;overflow:hidden;margin-top:12px}
+.sug{display:flex;gap:10px;align-items:center;width:100%;text-align:left;background:rgba(255,255,255,.05);border:1px solid var(--bd);border-radius:13px;padding:10px 12px;margin-top:8px;cursor:pointer;transition:background .2s}
+.sug:hover{background:rgba(139,92,246,.2)}
+.sug b{display:block}.sug small{color:var(--mut)}.sug .pts{margin-left:auto}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.stat{padding:18px}
+.stat b{display:block;font-size:30px;margin-top:4px}
+.off{opacity:.5}
+.tag{font-size:11px;border-radius:8px;padding:2px 8px;background:rgba(251,113,133,.2);color:var(--bad);margin-left:6px}
+.sw{display:flex;align-items:center;gap:10px;margin-top:14px;cursor:pointer}
+.sw input{width:20px;height:20px}
+
+/* modal / toast */
+.ov{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:grid;place-items:end center;animation:fade .2s}
+.ov .glass{width:min(480px,100%);background:#12122a;max-height:92dvh;overflow:auto;border-radius:24px 24px 0 0;animation:up .3s}
+@keyframes fade{from{opacity:0}}@keyframes up{from{transform:translateY(40px);opacity:0}}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:80;display:grid;gap:8px;width:min(92vw,420px);pointer-events:none}
+.tt{background:#1b1b38;border:1px solid var(--bd);border-radius:14px;padding:12px 16px;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:rise .3s both;font-size:14px}
+.tt.ok{border-color:var(--ok)}.tt.bad{border-color:var(--bad)}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* ====== ESCRITORIO / HORIZONTAL ====== */
+@media (min-width:900px) and (min-height:520px),(min-width:1100px){
+  .wrap{padding:28px 32px}
+  .top{padding:14px 32px}
+  .cgrid{grid-template-columns:minmax(380px,460px) 1fr;align-items:start;gap:28px}
+  .cgrid .col-l{display:grid;gap:22px;position:sticky;top:90px}
+  .opgrid{grid-template-columns:minmax(320px,420px) 1fr;align-items:start;gap:24px}
+  .adm{display:grid;grid-template-columns:230px 1fr;gap:0;max-width:1400px;margin:0 auto}
+  .nav{position:sticky;top:64px;align-self:start;height:calc(100dvh - 64px);flex-direction:column;justify-content:flex-start;gap:6px;padding:22px 14px;border-top:0;border-right:1px solid var(--bd);background:transparent;backdrop-filter:none}
+  .nav button{flex:none;flex-direction:row;gap:12px;font-size:15px;padding:13px 16px;justify-content:flex-start}
+  .adm main{padding:28px 32px}
+  .stats{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+  #toast{bottom:28px}
+  .auth{grid-template-columns:1.1fr 1fr;gap:40px;max-width:1150px;margin:0 auto}
+  .hero{display:block;animation:rise .8s both}
+  .hero h2{font-size:clamp(34px,4vw,54px);line-height:1.05;margin-bottom:14px}
+  .hero h2 em{font-style:normal;background:linear-gradient(135deg,var(--a),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--mut);font-size:18px;max-width:460px}
+  .hero .card3d{width:min(380px,100%);margin-top:30px;transform:perspective(900px) rotateY(-12deg) rotateX(6deg);animation:grad 9s ease infinite,hov 6s ease-in-out infinite}
+  @keyframes hov{50%{translate:0 -12px}}
+  .authbox{justify-self:center}
+  .ov{place-items:center}.ov .glass{border-radius:24px}
+}
+@media (min-width:900px) and (max-height:520px){ /* móvil en horizontal */
+  .cgrid{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"><i></i><i></i><i></i></div>
+<canvas id="fx"></canvas>
+<div id="app"></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+/* ═════════ CONFIGURACIÓN ═════════ */
+const API = 'PEGA_AQUI_LA_URL_DE_TU_WEB_APP';   // URL /exec de Apps Script
+const APP = 'FuturMovil Club';
+
+/* ═════════ UTILIDADES ═════════ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const eur = p => (p / 100).toLocaleString('es-ES', {style:'currency', currency:'EUR'});
+const num = n => Number(n).toLocaleString('es-ES');
+const fdate = i => new Date(i).toLocaleString('es-ES', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+const fday = i => new Date(i).toLocaleDateString('es-ES', {day:'2-digit', month:'short', year:'numeric'});
+const eurTxt = (s, c) => '= ' + eur(s) + ' para gastar' + (c ? '<br><span style="font-size:13px">⏳ ' + num(c.puntos) + ' pts caducan el ' + fday(c.fecha) + '</span>' : '');
+const cadInfo = m => m === 0 ? '<b style="color:#fff">Tus puntos no caducan.</b>' : '<b style="color:#fff">Los puntos caducan a los ' + (m === 12 ? '12 meses (1 año)' : m + ' meses') + ' de obtenerlos</b>; se gastan primero los más antiguos.';
+const S = {token: localStorage.getItem('fm_t') || '', role:'', user:null, qrTimer:null, poll:null, scanner:null};
+const A = {clients:[], sel:null, tab:'op'};
+
+async function call(action, data = {}) {
+  let r;
+  try {
+    r = await fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({action, token:S.token, ...data})});
+  } catch (e) { throw new Error('Sin conexión con el servidor'); }
+  const j = await r.json();
+  if (!j.ok) { if (/Sesión caducada/.test(j.error) && S.token) logout(true); throw new Error(j.error); }
+  return j.data;
+}
+function toast(msg, type = '') {
+  const d = document.createElement('div'); d.className = 'tt ' + type; d.textContent = msg;
+  $('#toast').appendChild(d); setTimeout(() => d.remove(), 3800);
+}
+async function act(btn, fn) {
+  const old = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try { await fn(); } catch (e) { toast(e.message, 'bad'); }
+  finally { btn.disabled = false; btn.innerHTML = old; }
+}
+function countUp(el, from, to, ms = 900) {
+  const t0 = performance.now();
+  (function f(t) {
+    const k = Math.min(1, (t - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    el.textContent = num(Math.round(from + (to - from) * e));
+    if (k < 1) requestAnimationFrame(f);
+  })(t0);
+}
+function modal(html) {
+  closeModal();
+  const o = document.createElement('div'); o.className = 'ov'; o.id = 'modal';
+  o.innerHTML = `<div class="glass">${html}</div>`;
+  o.addEventListener('click', e => { if (e.target === o) closeModal(); });
+  document.body.appendChild(o);
+}
+function closeModal() { const m = $('#modal'); if (m) m.remove(); }
+
+/* confeti */
+const fx = $('#fx'), cx = fx.getContext('2d'); let parts = [], running = false;
+function rs() { fx.width = innerWidth; fx.height = innerHeight; } addEventListener('resize', rs); rs();
+function confetti(n = 140) {
+  const cols = ['#8b5cf6','#22d3ee','#fbbf24','#34d399','#fb7185'];
+  for (let i = 0; i < n; i++) parts.push({x:innerWidth/2, y:innerHeight*.4, vx:(Math.random()-.5)*16, vy:Math.random()*-15-4, s:Math.random()*8+5, c:cols[i%5], r:Math.random()*6, vr:(Math.random()-.5)*.4, life:130});
+  if (!running) { running = true; requestAnimationFrame(loop); }
+}
+function loop() {
+  cx.clearRect(0, 0, fx.width, fx.height);
+  parts = parts.filter(p => p.life > 0);
+  parts.forEach(p => {
+    p.vy += .35; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life--;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.globalAlpha = Math.min(1, p.life/40);
+    cx.fillStyle = p.c; cx.fillRect(-p.s/2, -p.s/2, p.s, p.s*.6); cx.restore();
+  });
+  if (parts.length) requestAnimationFrame(loop); else { running = false; cx.clearRect(0, 0, fx.width, fx.height); }
+}
+
+/* ═════════ INSTALAR PWA ═════════ */
+let dip = null;
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; showInst(); });
+addEventListener('appinstalled', () => { dip = null; showInst(); toast('¡App instalada! 🎉', 'ok'); });
+function showInst() {
+  const show = !isStandalone && (dip || isIOS);
+  document.querySelectorAll('.inst').forEach(b => b.hidden = !show);
+}
+async function install() {
+  if (dip) { dip.prompt(); await dip.userChoice; dip = null; showInst(); }
+  else if (isIOS) modal(`<h3>Instalar en iPhone / iPad</h3><p class="mut">Pulsa el botón <b>Compartir</b> de Safari y elige <b>«Añadir a pantalla de inicio»</b>.</p><button class="btn big" onclick="closeModal()">Entendido</button>`);
+}
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+/* ═════════ SESIÓN ═════════ */
+function logout(expired) {
+  S.token = ''; localStorage.removeItem('fm_t'); clearInterval(S.poll); clearInterval(S.qrTimer); stopScan();
+  A.clients = []; A.sel = null;
+  authView('login'); if (expired === true) toast('Tu sesión ha caducado', 'bad');
+}
+async function boot() {
+  if (API.indexOf('PEGA_AQUI') === 0) { $('#app').innerHTML = '<div class="auth"><div class="glass authbox"><h3>Falta configurar</h3><p class="mut">Edita index.html y pon la URL de tu Web App en <b>API</b>.</p></div></div>'; return; }
+  if (!S.token) return authView('login');
+  try { const d = await call('me'); S.role = d.role; d.role === 'admin' ? adminView(d) : clientView(d); }
+  catch (e) { if (S.token) { authView('login'); toast(e.message, 'bad'); } }
+}
+
+/* ═════════ AUTENTICACIÓN ═════════ */
+function authView(mode, email = '') {
+  const heroCard = `<div class="card3d"><div class="shine"></div><div class="c-top"><span>${APP.toUpperCase()}</span><span class="chip">CLUB</span></div><div class="c-bal"><b>1.250</b><small>puntos</small></div><div class="c-bot"><span>Tu nombre</span><span>FM123456</span></div></div>`;
+  const forms = {
+    login: `<h1>Bienvenido</h1><p class="sub mut">Accede con tu correo y contraseña</p>
+      <label>CORREO</label><input id="em" type="email" autocomplete="username" value="${esc(email)}" placeholder="tu@correo.com">
+      <label>CONTRASEÑA</label><div class="pw"><input id="pw" type="password" autocomplete="current-password" placeholder="••••••••"><button type="button" onclick="eye()">👁</button></div>
+      <button class="btn big" style="margin-top:18px" id="go">Entrar</button>
+      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('forgot',$('#em').value)">¿Olvidaste tu contraseña?</button></div>`,
+    forgot: `<h1>Recuperar contraseña</h1><p class="sub mut">Te enviaremos un código por correo</p>
+      <label>CORREO</label><input id="em" type="email" value="${esc(email)}" placeholder="tu@correo.com">
+      <button class="btn big" style="margin-top:18px" id="go">Enviar código</button>
+      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('login',$('#em').value)">← Volver</button></div>`,
+    reset: `<h1>Nueva contraseña</h1><p class="sub mut">Introduce el código que te llegó al correo</p>
+      <label>CORREO</label><input id="em" type="email" value="${esc(email)}">
+      <label>CÓDIGO DE 6 CIFRAS</label><input id="cd" inputmode="numeric" maxlength="6" placeholder="123456">
+      <label>NUEVA CONTRASEÑA (mín. 8)</label><div class="pw"><input id="pw" type="password" autocomplete="new-password"><button type="button" onclick="eye()">👁</button></div>
+      <button class="btn big" style="margin-top:18px" id="go">Guardar y entrar</button>
+      <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('login',$('#em').value)">← Volver</button></div>`,
+  };
+  $('#app').innerHTML = `<main class="auth">
+    <section class="hero"><div class="brand" style="margin-bottom:26px"><div class="lg">✦</div><span>${APP}</span></div>
+      <h2>Cada compra te <em>devuelve</em> dinero.</h2><p>Acumula puntos, enséñanos tu QR y paga con ellos. 1 punto = 1 céntimo.</p>${heroCard}</section>
+    <div class="glass authbox"><div class="logo">✦</div>${forms[mode]}
+      <div style="text-align:center;margin-top:10px"><button class="link inst" hidden onclick="install()">⬇ Instalar la app</button></div></div></main>`;
+  showInst(); bindTilt();
+  const go = $('#go'), submit = () => go.click();
+  document.querySelectorAll('.authbox input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); }));
+  go.onclick = () => act(go, async () => {
+    const em = $('#em').value.trim();
+    if (mode === 'login') {
+      const d = await call('login', {email:em, password:$('#pw').value});
+      S.token = d.token; localStorage.setItem('fm_t', d.token); await boot();
+    } else if (mode === 'forgot') {
+      await call('forgot', {email:em}); toast('Si el correo existe, te hemos enviado un código', 'ok'); authView('reset', em);
+    } else {
+      await call('reset', {email:em, code:$('#cd').value, password:$('#pw').value});
+      const d = await call('login', {email:em, password:$('#pw').value});
+      S.token = d.token; localStorage.setItem('fm_t', d.token); toast('Contraseña actualizada', 'ok'); await boot();
+    }
+  });
+}
+function eye() { const p = $('#pw'); p.type = p.type === 'password' ? 'text' : 'password'; }
+function bindTilt() {
+  document.querySelectorAll('.card3d').forEach(c => {
+    c.addEventListener('pointermove', e => {
+      const r = c.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+      c.style.setProperty('--ry', ((x - .5) * 18) + 'deg'); c.style.setProperty('--rx', ((.5 - y) * 18) + 'deg');
+      c.style.setProperty('--mx', x * 100 + '%'); c.style.setProperty('--my', y * 100 + '%');
+    });
+    c.addEventListener('pointerleave', () => { c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg'); });
+  });
+}
+
+/* ═════════ BARRA SUPERIOR ═════════ */
+function topbar(sub) {
+  return `<header class="top"><div class="brand"><div class="lg">✦</div><span>${APP}</span></div>
+    <span class="who">${esc(sub)}</span>
+    <button class="btn ghost sm inst" hidden onclick="install()">⬇ Instalar</button>
+    <button class="btn ghost sm" onclick="pwModal()" title="Cambiar contraseña">🔑</button>
+    <button class="btn ghost sm" onclick="logout()">Salir</button></header>`;
+}
+function pwModal() {
+  modal(`<h3>Cambiar contraseña</h3>
+    <label>CONTRASEÑA ACTUAL</label><input id="p0" type="password" autocomplete="current-password">
+    <label>NUEVA (mín. 8)</label><input id="p1" type="password" autocomplete="new-password">
+    <div class="row" style="margin-top:18px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="pok">Guardar</button></div>`);
+  $('#pok').onclick = e => act(e.currentTarget, async () => {
+    await call('changePassword', {actual:$('#p0').value, nueva:$('#p1').value}); closeModal(); toast('Contraseña cambiada', 'ok');
+  });
+}
+
+/* ═════════ CLIENTE ═════════ */
+const ICO = {compra:'🛍️', canje:'💸', ajuste:'🛠️', bienvenida:'🎁', caducidad:'⌛'};
+const LBL = {compra:'Compra', canje:'Pago con puntos', ajuste:'Ajuste', bienvenida:'Bienvenida', caducidad:'Puntos caducados'};
+function movRow(m) {
+  return `<div class="mv"><div class="ic">${ICO[m.tipo] || '•'}</div><div class="t"><b>${esc(m.nota || LBL[m.tipo])}</b><small>${LBL[m.tipo] || m.tipo} · ${fdate(m.fecha)}</small></div>
+    <div class="pts ${m.puntos > 0 ? 'pos' : 'neg'}">${m.puntos > 0 ? '+' : ''}${num(m.puntos)}<small>saldo ${num(m.saldoTras)}</small></div></div>`;
+}
+function clientView(d) {
+  S.user = d.user; let saldo = d.user.saldo;
+  $('#app').innerHTML = `${topbar(d.user.nombre)}
+  <main class="wrap cgrid">
+    <section class="col-l">
+      <div class="card3d" id="card"><div class="shine"></div>
+        <div class="c-top"><span>${APP.toUpperCase()}</span><span class="chip">CLUB</span></div>
+        <div><div class="c-bal"><b id="bal">0</b><small>puntos</small></div><div class="c-eur" id="eur"></div></div>
+        <div class="c-bot"><span>${esc(d.user.nombre)}</span><span>${esc(d.user.id)}</span></div></div>
+      <div class="glass qrbox"><h3>Tu código QR</h3><p class="mut" style="margin:6px 0 0">Enséñalo en caja para sumar o pagar con puntos</p>
+        <div class="qrwrap"><div id="qr"></div></div><div class="bar"><i id="bar"></i></div><small class="mut">Se renueva solo por seguridad</small></div>
+    </section>
+    <section class="stack"><div class="glass"><h3 style="margin-bottom:6px">Movimientos</h3><div id="movs"></div></div>
+      <div class="glass"><b>¿Cómo funciona?</b><p class="mut" style="margin:8px 0 0">Ganas puntos con cada compra. <b style="color:#fff">1 punto = 0,01 €</b> y puedes usarlos para pagar parte o toda tu próxima compra. ${cadInfo(d.config.mesesCaducidad)}</p></div></section>
+  </main>`;
+  bindTilt(); showInst(); countUp($('#bal'), 0, saldo); $('#eur').innerHTML = eurTxt(saldo, d.proxCaduca);
+  $('#movs').innerHTML = d.movimientos.length ? d.movimientos.map(movRow).join('') : '<div class="empty">Aún no tienes movimientos.<br>¡Enseña tu QR en tu próxima compra!</div>';
+  const qr = async () => {
+    try { const q = await call('qr'); $('#qr').innerHTML = ''; new QRCode($('#qr'), {text:q.code, width:240, height:240, correctLevel:QRCode.CorrectLevel.M});
+      const b = $('#bar'); b.classList.remove('go'); void b.offsetWidth; b.classList.add('go'); } catch (e) {}
+  };
+  qr(); clearInterval(S.qrTimer); S.qrTimer = setInterval(qr, 50000);
+  clearInterval(S.poll);
+  S.poll = setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      const n = await call('me'); const nu = n.user.saldo;
+      if (nu !== saldo) {
+        const diff = nu - saldo;
+        countUp($('#bal'), saldo, nu); $('#eur').innerHTML = eurTxt(nu, n.proxCaduca);
+        $('#movs').innerHTML = n.movimientos.map(movRow).join('');
+        if (diff > 0) { confetti(); toast('🎉 +' + num(diff) + ' puntos', 'ok'); } else toast('Has usado ' + num(-diff) + ' puntos (' + eur(-diff) + ')', 'ok');
+        saldo = nu;
+      }
+    } catch (e) {}
+  }, 7000);
+}
+
+/* ═════════ ADMIN ═════════ */
+const TABS = [['op','🎯','Operar'], ['cl','👥','Clientes'], ['mv','🧾','Movimientos'], ['st','⚙️','Resumen']];
+async function adminView(d) {
+  S.user = d.user; clearInterval(S.poll); clearInterval(S.qrTimer);
+  $('#app').innerHTML = `${topbar('Administrador')}<div class="adm"><nav class="nav" id="nav"></nav><main class="wrap" id="tab"></main></div>`;
+  showInst(); await loadClients(); tab(A.tab);
+}
+async function loadClients() { try { A.clients = await call('clients'); } catch (e) { toast(e.message, 'bad'); } }
+function tab(t) {
+  stopScan(); A.tab = t;
+  $('#nav').innerHTML = TABS.map(([k, i, l]) => `<button class="${k === t ? 'on' : ''}" onclick="tab('${k}')"><span>${i}</span>${l}</button>`).join('');
+  ({op:tabOp, cl:tabCl, mv:tabMv, st:tabSt})[t]();
+}
+
+/* — Operar — */
+function tabOp() {
+  $('#tab').innerHTML = `<div class="opgrid">
+    <div class="glass"><h3>Identificar cliente</h3>
+      <button class="btn big" style="margin-top:14px" id="scan">📷 Escanear QR</button><div id="reader"></div>
+      <label>O BUSCA POR NOMBRE, CORREO, ID O QR</label><input id="q" placeholder="Escribe para buscar…" autocomplete="off"><div id="sugs"></div></div>
+    <div id="selbox"></div></div>`;
+  $('#scan').onclick = startScan;
+  $('#q').oninput = e => {
+    const v = e.target.value.trim().toLowerCase(); if (v.length < 2) return $('#sugs').innerHTML = '';
+    const r = A.clients.filter(c => c.activo && (c.nombre.toLowerCase().includes(v) || c.email.includes(v) || c.id.toLowerCase().includes(v))).slice(0, 6);
+    $('#sugs').innerHTML = r.map(c => `<button class="sug" onclick="pick('${c.id}')"><div><b>${esc(c.nombre)}</b><small>${esc(c.email)}</small></div><div class="pts">${num(c.saldo)}</div></button>`).join('') || '<div class="empty">Sin resultados</div>';
+  };
+  $('#q').onkeydown = e => { if (e.key === 'Enter' && e.target.value.startsWith('FM.')) pick(e.target.value.trim()); };
+  renderSel();
+}
+async function startScan() {
+  if (S.scanner) return stopScan();
+  try {
+    S.scanner = new Html5Qrcode('reader');
+    await S.scanner.start({facingMode:'environment'}, {fps:10, qrbox:{width:230, height:230}}, txt => { stopScan(); pick(txt); }, () => {});
+    $('#scan').textContent = '✖ Cerrar cámara';
+  } catch (e) { S.scanner = null; toast('No se pudo abrir la cámara', 'bad'); }
+}
+function stopScan() {
+  const s = S.scanner; S.scanner = null;
+  if (s) s.stop().then(() => s.clear()).catch(() => {});
+  const b = $('#scan'); if (b) b.textContent = '📷 Escanear QR';
+}
+async function pick(code) {
+  try { A.sel = await call('lookup', {code}); const i = A.clients.findIndex(c => c.id === A.sel.id); if (i >= 0) A.clients[i] = A.sel;
+    if (A.tab !== 'op') tab('op'); else renderSel(); if (navigator.vibrate) navigator.vibrate(60); }
+  catch (e) { toast(e.message, 'bad'); }
+}
+function renderSel() {
+  const b = $('#selbox'); if (!b) return; const c = A.sel;
+  if (!c) { b.innerHTML = '<div class="glass empty">Escanea el QR del cliente o búscalo para sumar o canjear puntos.</div>'; return; }
+  const rate = A.rate || 5;
+  b.innerHTML = `<div class="glass sel"><div class="who2"><div><h3>${esc(c.nombre)}</h3><small class="mut">${esc(c.email)} · ${esc(c.id)}</small></div>
+      <button class="btn ghost sm" onclick="A.sel=null;renderSel()">✖</button></div>
+    <div class="big pos" style="margin-top:12px" id="sbal">${num(c.saldo)} <small class="mut" style="font-size:16px;font-weight:500">pts</small></div><div class="mut">= ${eur(c.saldo)} disponibles</div>${c.proxCaduca ? `<div class="mut" style="font-size:13px;margin-top:4px">⏳ ${num(c.proxCaduca.puntos)} pts caducan el ${fday(c.proxCaduca.fecha)}</div>` : ''}
+    <div class="box"><b>➕ Sumar por compra</b><label>IMPORTE DE LA COMPRA (€)</label><input id="amt" inputmode="decimal" placeholder="0,00"><div class="prev" id="pa"></div>
+      <button class="btn big" style="margin-top:10px" id="add">Sumar puntos</button></div>
+    <div class="box"><b>💸 Pagar con puntos</b><label>PUNTOS A USAR</label><div class="row"><input id="rp" inputmode="numeric" placeholder="0"><button class="btn ghost" style="flex:none" id="all">Todos</button></div><div class="prev" id="pr"></div>
+      <button class="btn big red" style="margin-top:10px" id="red">Canjear</button></div>
+    <details class="box"><summary style="cursor:pointer">🛠️ Ajuste manual</summary><label>PUNTOS (+ o −)</label><input id="ap" inputmode="numeric" placeholder="-50"><label>MOTIVO</label><input id="an" placeholder="Opcional">
+      <button class="btn ghost big" style="margin-top:10px" id="adj">Aplicar ajuste</button></details></div>`;
+  $('#amt').oninput = e => { const v = parseFloat(e.target.value.replace(',', '.')); $('#pa').textContent = v > 0 ? '→ ' + num(Math.floor(v * rate)) + ' puntos' : ''; };
+  $('#rp').oninput = e => { const v = parseInt(e.target.value); $('#pr').textContent = v > 0 ? (v > c.saldo ? '⚠ Supera su saldo' : '→ descuento de ' + eur(v)) : ''; };
+  $('#all').onclick = () => { $('#rp').value = c.saldo; $('#rp').oninput({target:$('#rp')}); };
+  const done = async (r, big) => { try { A.sel = await call('lookup', {code:c.id}); } catch (e) { A.sel.saldo = r.saldo; } const i = A.clients.findIndex(x => x.id === c.id); if (i >= 0) A.clients[i].saldo = r.saldo; renderSel(); if (big) confetti(100); };
+  $('#add').onclick = e => act(e.currentTarget, async () => { const r = await call('addPoints', {id:c.id, euros:$('#amt').value.replace(',', '.')}); toast('+' + num(r.puntos) + ' puntos añadidos', 'ok'); await done(r, true); });
+  $('#red').onclick = e => act(e.currentTarget, async () => { const r = await call('redeem', {id:c.id, puntos:$('#rp').value}); toast('Descontar ' + eur(r.puntos) + ' de la compra', 'ok'); await done(r); });
+  $('#adj').onclick = e => act(e.currentTarget, async () => { const r = await call('adjust', {id:c.id, puntos:$('#ap').value, nota:$('#an').value}); toast('Ajuste aplicado', 'ok'); await done(r); });
+}
+
+/* — Clientes — */
+function tabCl() {
+  $('#tab').innerHTML = `<div class="glass"><div class="row" style="margin-bottom:12px"><input id="cq" placeholder="Buscar cliente…"><button class="btn" style="flex:none" onclick="newClient()">＋ Alta</button></div><div id="cl"></div></div>`;
+  const draw = () => {
+    const v = $('#cq').value.trim().toLowerCase();
+    const r = A.clients.filter(c => !v || c.nombre.toLowerCase().includes(v) || c.email.includes(v) || c.id.toLowerCase().includes(v));
+    $('#cl').innerHTML = r.map(c => `<div class="mv ${c.activo ? '' : 'off'}" style="cursor:pointer" onclick="clientModal('${c.id}')"><div class="ic">👤</div><div class="t"><b>${esc(c.nombre)}${c.activo ? '' : '<span class="tag">BAJA</span>'}</b><small>${esc(c.email)} · ${esc(c.id)}</small></div><div class="pts">${num(c.saldo)}<small>${eur(c.saldo)}</small></div></div>`).join('') || '<div class="empty">No hay clientes todavía</div>';
+  };
+  $('#cq').oninput = draw; draw();
+}
+function newClient() {
+  modal(`<h3>Nuevo cliente</h3><label>NOMBRE</label><input id="n1"><label>CORREO</label><input id="n2" type="email"><label>TELÉFONO (opcional)</label><input id="n3" inputmode="tel">
+    <label>BONO DE BIENVENIDA (puntos)</label><input id="n4" inputmode="numeric" value="0">
+    <p class="mut" style="font-size:13px">Se le enviará por correo una contraseña temporal.</p>
+    <div class="row" style="margin-top:12px"><button class="btn ghost" onclick="closeModal()">Cancelar</button><button class="btn" id="nok">Dar de alta</button></div>`);
+  $('#nok').onclick = e => act(e.currentTarget, async () => {
+    await call('createClient', {nombre:$('#n1').value, email:$('#n2').value, telefono:$('#n3').value, bono:$('#n4').value});
+    closeModal(); await loadClients(); tabCl(); toast('Cliente creado y avisado por correo', 'ok'); confetti(60);
+  });
+}
+function clientModal(id) {
+  const c = A.clients.find(x => x.id === id); if (!c) return;
+  modal(`<h3>${esc(c.nombre)}</h3><small class="mut">${esc(c.email)} · ${esc(c.id)} · ${num(c.saldo)} pts</small>
+    <label>NOMBRE</label><input id="e1" value="${esc(c.nombre)}"><label>TELÉFONO</label><input id="e2" value="${esc(c.telefono)}">
+    <label class="sw"><input type="checkbox" id="e3" ${c.activo ? 'checked' : ''}> Cliente activo</label>
+    <div class="row" style="margin-top:16px"><button class="btn ghost" id="eop">🎯 Operar</button><button class="btn ghost" id="ehi">🧾 Historial</button></div>
+    <div class="row" style="margin-top:10px"><button class="btn ghost" onclick="closeModal()">Cerrar</button><button class="btn" id="eok">Guardar</button></div>`);
+  $('#eop').onclick = () => { closeModal(); pick(c.id); };
+  $('#ehi').onclick = () => { closeModal(); A.filter = c.id; tab('mv'); };
+  $('#eok').onclick = e => act(e.currentTarget, async () => {
+    await call('updateClient', {id, nombre:$('#e1').value, telefono:$('#e2').value, activo:$('#e3').checked});
+    closeModal(); await loadClients(); tabCl(); toast('Guardado', 'ok');
+  });
+}
+
+/* — Movimientos — */
+async function tabMv() {
+  const f = A.filter; A.filter = null;
+  $('#tab').innerHTML = `<div class="glass"><h3 style="margin-bottom:6px">Movimientos ${f ? '<button class="link" onclick="tab(\'mv\')">(ver todos)</button>' : ''}</h3><div id="ml"><div class="empty"><span class="spin"></span>Cargando…</div></div></div>`;
+  try {
+    const m = await call('movements', {id:f});
+    $('#ml').innerHTML = m.length ? m.map(x => `<div class="mv"><div class="ic">${ICO[x.tipo] || '•'}</div><div class="t"><b>${esc(x.nombre)}</b><small>${LBL[x.tipo] || x.tipo} · ${esc(x.nota)} · ${fdate(x.fecha)}</small></div><div class="pts ${x.puntos > 0 ? 'pos' : 'neg'}">${x.puntos > 0 ? '+' : ''}${num(x.puntos)}<small>${x.euros ? eur(Math.round(x.euros * 100)) : ''}</small></div></div>`).join('') : '<div class="empty">Sin movimientos</div>';
+  } catch (e) { $('#ml').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
+
+/* — Resumen y ajustes — */
+async function tabSt() {
+  $('#tab').innerHTML = '<div class="empty"><span class="spin"></span>Cargando…</div>';
+  try {
+    const s = await call('stats'); A.rate = s.config.puntosPorEuro;
+    $('#tab').innerHTML = `<div class="stack"><div class="stats">
+      <div class="glass stat"><span class="mut">Clientes activos</span><b>${num(s.activos)}</b></div>
+      <div class="glass stat"><span class="mut">Puntos en circulación</span><b class="pos">${num(s.saldoTotal)}</b><small class="mut">${eur(s.saldoTotal)}</small></div>
+      <div class="glass stat"><span class="mut">Puntos emitidos</span><b>${num(s.emitidos)}</b></div>
+      <div class="glass stat"><span class="mut">Puntos canjeados</span><b class="neg">${num(s.canjeados)}</b><small class="mut">${eur(s.canjeados)}</small></div>
+      <div class="glass stat"><span class="mut">Puntos caducados</span><b class="neg">${num(s.caducados)}</b><small class="mut">${eur(s.caducados)}</small></div></div>
+      <div class="glass" style="max-width:520px"><h3>Regla de puntos</h3><label>PUNTOS POR CADA 1 € DE COMPRA</label><input id="rt" inputmode="decimal" value="${s.config.puntosPorEuro}">
+        <p class="mut" style="font-size:13px">Ahora mismo: ${s.config.puntosPorEuro} pts/€ = ${s.config.puntosPorEuro}% de vuelta (1 pt = 0,01 €).</p><button class="btn" id="rok">Guardar regla</button></div>
+      <div class="glass" style="max-width:520px"><h3>Caducidad de los puntos</h3><label>MESES DE VALIDEZ (0 = no caducan nunca)</label><input id="ct" inputmode="numeric" value="${s.config.mesesCaducidad}">
+        <p class="mut" style="font-size:13px">Ahora mismo: ${s.config.mesesCaducidad === 0 ? 'los puntos no caducan' : 'caducan a los ' + s.config.mesesCaducidad + ' meses de obtenerlos'}. El cambio afecta también a los puntos ya acumulados: si lo aumentas, se amplía su vida; si lo reduces, caducarán los que superen el nuevo plazo.</p><button class="btn" id="cok">Guardar caducidad</button></div></div>`;
+    $('#rok').onclick = e => act(e.currentTarget, async () => { const c = await call('setConfig', {puntosPorEuro:$('#rt').value.replace(',', '.')}); A.rate = c.puntosPorEuro; toast('Regla actualizada', 'ok'); tabSt(); });
+    $('#cok').onclick = e => act(e.currentTarget, async () => {
+      const m = parseInt($('#ct').value), old = s.config.mesesCaducidad;
+      if (!(m >= 0)) throw new Error('Introduce los meses (0 = sin caducidad)');
+      if (m > 0 && (old === 0 || m < old) && !confirm('Vas a ' + (old === 0 ? 'activar' : 'reducir') + ' la caducidad: los puntos obtenidos hace más de ' + m + ' meses caducarán ahora mismo. ¿Continuar?')) return;
+      await call('setConfig', {mesesCaducidad:m}); toast('Caducidad actualizada', 'ok'); tabSt();
+    });
+  } catch (e) { $('#tab').innerHTML = '<div class="empty">' + esc(e.message) + '</div>'; }
+}
+
+boot();
+</script>
+</body>
+</html>
