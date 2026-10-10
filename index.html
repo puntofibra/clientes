@@ -510,6 +510,24 @@ function logout(expired) {
 }
 async function boot() {
   if (API.indexOf('PEGA_AQUI') === 0) { $('#app').innerHTML = '<div class="auth"><div class="glass authbox"><h3>Falta configurar</h3><p class="mut">Edita index.html y pon la URL de tu Web App en <b>API</b>.</p></div></div>'; return; }
+  // Enlace "Entrar ahora" del correo de bienvenida: #entrar=<correo y contraseña temporal>
+  if (location.hash.indexOf('#entrar=') === 0) {
+    const h = location.hash.slice(8);
+    history.replaceState(null, '', location.pathname + location.search); // se borra de la barra al momento
+    let em = '', pw = '';
+    try { [em, pw] = atob(h.replace(/-/g, '+').replace(/_/g, '/')).split('\n'); } catch (e) {}
+    if (em && pw) {
+      try {
+        const d = await call('login', { email: em, password: pw });
+        S.token = d.token; localStorage.setItem('fm_t', d.token);
+        setTimeout(() => toast('¡Bienvenido! Puedes cambiar tu contraseña con 🔑', 'ok'), 800);
+      } catch (e) {
+        S.token = null; localStorage.removeItem('fm_t');
+        authView('login', em); setTimeout(() => toast('Esa contraseña temporal ya no vale: entra con tu contraseña actual', 'bad'), 300);
+        return;
+      }
+    }
+  }
   if (!S.token) return authView('login');
   try { const d = await call('me'); S.role = d.role; d.role === 'admin' ? adminView(d) : clientView(d); }
   catch (e) { if (S.token) { authView('login'); toast(e.message, 'bad'); } }
