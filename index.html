@@ -166,6 +166,8 @@ label{display:block;font-size:12px;color:var(--mut);margin:12px 0 6px;letter-spa
   .cgrid{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+img.lg,img.logo{background:none;object-fit:contain;display:block}
 </style>
 </head>
 <body>
@@ -297,9 +299,9 @@ function authView(mode, email = '') {
       <div style="text-align:center;margin-top:8px"><button class="link" onclick="authView('login',$('#em').value)">← Volver</button></div>`,
   };
   $('#app').innerHTML = `<main class="auth">
-    <section class="hero"><div class="brand" style="margin-bottom:26px"><div class="lg">✦</div><span>${APP}</span></div>
+    <section class="hero"><div class="brand" style="margin-bottom:26px"><img class="lg" src="icon-192.png" alt=""><span>${APP}</span></div>
       <h2>Cada compra te <em>devuelve</em> dinero.</h2><p>Acumula puntos, enséñanos tu QR y paga con ellos. 1 punto = 1 céntimo.</p>${heroCard}</section>
-    <div class="glass authbox"><div class="logo">✦</div>${forms[mode]}
+    <div class="glass authbox"><img class="logo" src="icon-192.png" alt="">${forms[mode]}
       <div style="text-align:center;margin-top:10px"><button class="link inst" hidden onclick="install()">⬇ Instalar la app</button></div></div></main>`;
   showInst(); bindTilt();
   const go = $('#go'), submit = () => go.click();
@@ -332,7 +334,7 @@ function bindTilt() {
 
 /* ═════════ BARRA SUPERIOR ═════════ */
 function topbar(sub) {
-  return `<header class="top"><div class="brand"><div class="lg">✦</div><span>${APP}</span></div>
+  return `<header class="top"><div class="brand"><img class="lg" src="icon-192.png" alt=""><span>${APP}</span></div>
     <span class="who">${esc(sub)}</span>
     <button class="btn ghost sm inst" hidden onclick="install()">⬇ Instalar</button>
     <button class="btn ghost sm" onclick="pwModal()" title="Cambiar contraseña">🔑</button>
